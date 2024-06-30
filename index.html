@@ -3,107 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Your Name Matrix Rain</title>
+    <title>Matrix Rain With Your Name</title>
+
     <style>
         #MatrixRain{
-            width: 100%;
-            height: 100%;
-            position: fixed;
-            background-color: black;
-            overflow: hidden;
+            position: absolute;
             top: 0;
             left: 0;
+            background-color: black;
         }
-
-        body{
-            margin: 0;
-            padding:0;
-            position: relative;
-        }
-
     </style>
+
 </head>
 <body>
-    
     <canvas id="MatrixRain" width="800" height="500"></canvas>
 
     <script>
-        const targetWord = "Mohido";
-        const targetWordLength = targetWord.length;  
-        const targetFilled = Array(targetWordLength).fill(false);
-
-        const fontSize = 20;
+        const squareSize = 20; 
         const canvas = document.getElementById("MatrixRain");
-        const ctxt = canvas.getContext("2d");
-        ctxt.font = `${fontSize}px monospace`;
-        
-        const columnCount = Math.floor(canvas.width / fontSize);
-        const letters = Array(columnCount).fill(0); 
-        let finished = 0;
-        
-        // Where each letter is positioned.
-        const targetPositions = [];
-        const y0 = Math.floor((canvas.height / 2) / fontSize);
-        const x0 = Math.floor((canvas.width / 2 - (targetWordLength * fontSize) / 2) / fontSize);
-        for (let i = 0; i < targetWordLength; i++) {
-            targetPositions.push({
-                x: x0 + i,
-                y: y0
-            });
-        }
+        const ctxt = canvas.getContext('2d');
+        ctxt.font = `${squareSize}px monospace`;
 
-        // The render loop function
-        const drawMatrix = () => {
-            ctxt.fillStyle = 'rgba(0, 0, 0, 0.05)';
-            ctxt.font = `${fontSize}px monospace`;
+        const columnCount = Math.round(canvas.width / squareSize); 
+        const lettersPosition = Array(columnCount).fill(1);
+
+        const word = "Mohido";
+        const wlength = word.length;
+        
+        // Word coordinate system
+        const x0 = Math.floor(((canvas.width - wlength*squareSize)/2) /squareSize);         // Word Column (Grid Coordinate System)
+        const x1 = Math.floor(x0 + wlength-1);                                              // Word Column (Grid Coordinate System)
+        const y0 = Math.floor(canvas.height/2/squareSize);                                  // Word Row (Grid Coordinate System)        
+
+        const filledCharacters = Array(wlength).fill(false);
+        let filled = 0;
+
+        const drawRain = () => {
+            ctxt.fillStyle = "rgba(0,0,0, 0.07)";
             ctxt.fillRect(0, 0, canvas.width, canvas.height);
-            ctxt.fillStyle = '#39ff14';
+            ctxt.fillStyle = "#39ff14";
 
-            // Render the already filled words
-            targetPositions.forEach(({x, y}, index) => {
-                targetFilled[index] && ctxt.fillText(targetWord[index], x*fontSize, y*fontSize);
-            })
+            // render filled characters
+            filledCharacters.forEach((f , i) => f && ctxt.fillText(word[i], (x0+i)*squareSize, y0*squareSize));
 
-            // Render the Random letters
-            for(let i = 0; i < letters.length; i++){
-                if(letters[i] === null)
-                    continue;
-                
-                // If the current letter is at the target position
-                const targetIndex = targetPositions.findIndex(pos => pos.x === i && pos.y === letters[i]);
-                const rand = Math.random();
-                const py = letters[i] * fontSize;
-                const px = i * fontSize;
+            // Render Randomness
+            lettersPosition.forEach((y, i ) => {
+                if(y === null){
+                    return;
+                }
 
-                // letter reached the vertical position of the target word
-                if (Math.round(rand) === 0 && targetIndex !== -1) {
-                    ctxt.fillText(targetWord[targetIndex], px, py);
-                    letters[i] = null;  // Stop animation for this column
-                    targetFilled[targetIndex] = true;
-                    finished++;
+                const px = i*squareSize;
+                const py = y*squareSize;
+                if(x0 <= i && i <= x1 && y == y0 && Math.round(Math.random()) == 0){
+                    lettersPosition[i] = null;
+                    filledCharacters[i-x0] = true;
+                    filled++;
                 }else{
-                    ctxt.fillText(String.fromCharCode(100 * rand),px, py);
-                    letters[i]++;
-                    if( (py + fontSize) > canvas.height){
-                        if(finished >= targetWordLength) {
-                            letters[i] = null;
-                            finished++;
-                        }
-                        else{
-                            letters[i] = -Math.floor(rand*30); // Random 5 blocks backwards
+                    const RandChar = String.fromCharCode(Math.random() * 100);
+                    ctxt.fillText(RandChar, px, py);   
+                    lettersPosition[i]++;
+                    if(py+squareSize >= canvas.height){
+                        if(filled >= wlength){
+                            lettersPosition[i] = null;
+                            filled++;
+                        }else{
+                            lettersPosition[i] = - Math.floor(Math.random()*50);
                         }
                     }
                 }
-
-            }
+            })
         }
 
         const animate = () => {
-            drawMatrix();
-            return requestAnimationFrame(animate);
+            drawRain();
+            requestAnimationFrame(animate);
         }
+
         animate();
     </script>
-
 </body>
 </html>
