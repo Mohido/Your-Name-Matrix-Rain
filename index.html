@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Name Matrix Rain</title>
+    <style>
+        #MatrixRain{
+            width: 100%;
+            height: 100%;
+            position: fixed;
+            background-color: black;
+            overflow: hidden;
+            top: 0;
+            left: 0;
+        }
+
+        body{
+            margin: 0;
+            padding:0;
+            position: relative;
+        }
+
+    </style>
+</head>
+<body>
+    
+    <canvas id="MatrixRain" width="800" height="500"></canvas>
+
+    <script>
+        const targetWord = "Mohido";
+        const targetWordLength = targetWord.length;  
+        const targetFilled = Array(targetWordLength).fill(false);
+
+        const fontSize = 20;
+        const canvas = document.getElementById("MatrixRain");
+        const ctxt = canvas.getContext("2d");
+        ctxt.font = `${fontSize}px monospace`;
+        
+        const columnCount = Math.floor(canvas.width / fontSize);
+        const letters = Array(columnCount).fill(0); 
+        let finished = 0;
+        
+        // Where each letter is positioned.
+        const targetPositions = [];
+        const y0 = Math.floor((canvas.height / 2) / fontSize);
+        const x0 = Math.floor((canvas.width / 2 - (targetWordLength * fontSize) / 2) / fontSize);
+        for (let i = 0; i < targetWordLength; i++) {
+            targetPositions.push({
+                x: x0 + i,
+                y: y0
+            });
+        }
+
+        // The render loop function
+        const drawMatrix = () => {
+            ctxt.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctxt.font = `${fontSize}px monospace`;
+            ctxt.fillRect(0, 0, canvas.width, canvas.height);
+            ctxt.fillStyle = '#39ff14';
+
+            // Render the already filled words
+            targetPositions.forEach(({x, y}, index) => {
+                targetFilled[index] && ctxt.fillText(targetWord[index], x*fontSize, y*fontSize);
+            })
+
+            // Render the Random letters
+            for(let i = 0; i < letters.length; i++){
+                if(letters[i] === null)
+                    continue;
+                
+                // If the current letter is at the target position
+                const targetIndex = targetPositions.findIndex(pos => pos.x === i && pos.y === letters[i]);
+                const rand = Math.random();
+                const py = letters[i] * fontSize;
+                const px = i * fontSize;
+
+                // letter reached the vertical position of the target word
+                if (Math.round(rand) === 0 && targetIndex !== -1) {
+                    ctxt.fillText(targetWord[targetIndex], px, py);
+                    letters[i] = null;  // Stop animation for this column
+                    targetFilled[targetIndex] = true;
+                    finished++;
+                }else{
+                    ctxt.fillText(String.fromCharCode(100 * rand),px, py);
+                    letters[i]++;
+                    if( (py + fontSize) > canvas.height){
+                        if(finished >= targetWordLength) {
+                            letters[i] = null;
+                            finished++;
+                        }
+                        else{
+                            letters[i] = -Math.floor(rand*30); // Random 5 blocks backwards
+                        }
+                    }
+                }
+
+            }
+        }
+
+        const animate = () => {
+            drawMatrix();
+            return requestAnimationFrame(animate);
+        }
+        animate();
+    </script>
+
+</body>
+</html>
